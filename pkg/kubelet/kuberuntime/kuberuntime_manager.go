@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	goruntime "runtime"
+	"sort"
 	"time"
 
 	cadvisorapi "github.com/google/cadvisor/info/v1"
@@ -426,6 +427,11 @@ func (m *kubeGenericRuntimeManager) podSandboxChanged(pod *v1.Pod, podStatus *ku
 			readySandboxCount++
 		}
 	}
+	// Sort SandboxStatuses by Attempt-No. to make sure we're looking at the latest
+	// Sandbox
+	sort.Slice(podStatus.SandboxStatuses, func(i, j int) bool {
+		return podStatus.SandboxStatuses[i].Metadata.Attempt < podStatus.SandboxStatuses[j].Metadata.Attempt
+	})
 
 	// Needs to create a new sandbox when readySandboxCount > 1 or the ready sandbox is not the latest one.
 	sandboxStatus := podStatus.SandboxStatuses[0]
